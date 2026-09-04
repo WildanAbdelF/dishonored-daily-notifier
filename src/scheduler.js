@@ -1,4 +1,5 @@
 const cron = require('node-cron');
+const { EmbedBuilder } = require('discord.js');
 const scheduleData = require('./data/schedule.json');
 
 const TIMEZONE = 'Asia/Jakarta';
@@ -8,8 +9,7 @@ function getJakartaDateParts(date = new Date()) {
         timeZone: TIMEZONE,
         year: 'numeric',
         month: '2-digit',
-        day: '2-digit',
-        month: 'long'
+        day: '2-digit'
     }).formatToParts(date);
 
     return Object.fromEntries(parts
@@ -30,7 +30,7 @@ function createMessage(date = new Date()) {
     if (!dungeon) return null;
 
     return [
-        'Pagi Pejuang Altera!',
+        'Pagi lorem ipsum dolor sit amet!',
         '',
         `Jadwal Dungeon hari ini (${dateParts.day}/${dateParts.month}/${dateParts.year}):`,
         `Level 65: ${dungeon.lvl65}`,
@@ -40,19 +40,47 @@ function createMessage(date = new Date()) {
     ].join('\n');
 }
 
+function createEmbed(date = new Date()) {
+    const { dateParts, dungeon } = getTodaySchedule(date);
+    if (!dungeon) return null;
+
+    const formattedDate = `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
+    const embed = new EmbedBuilder()
+        .setColor(0x19d3c5)
+        .setTitle('🧱 Lucky Zone Tudei')
+        .setDescription(`date: ${formattedDate}`)
+        .addFields(
+            { name: '🏰 Lv 65 Dungeon', value: dungeon.lvl65, inline: true },
+            { name: '🏰 Lv 70 Dungeon', value: dungeon.lvl70, inline: true }
+        )
+        .setFooter({
+            text: `Dishonored Notifier • ${formattedDate}`
+        });
+
+    if (process.env.DUNGEON_THUMBNAIL_URL) {
+        embed.setThumbnail(process.env.DUNGEON_THUMBNAIL_URL);
+    }
+
+    if (process.env.DUNGEON_IMAGE_URL) {
+        embed.setImage(process.env.DUNGEON_IMAGE_URL);
+    }
+
+    return embed;
+}
+
 async function sendTodaySchedule(client) {
     const channel = await client.channels.fetch(process.env.CHANNEL_ID);
     if (!channel || !channel.isTextBased()) {
         throw new Error('CHANNEL_ID tidak menunjuk ke text channel yang valid.');
     }
 
-    const message = createMessage();
-    if (!message) {
+    const embed = createEmbed();
+    if (!embed) {
         console.warn('Jadwal untuk tanggal hari ini belum tersedia.');
         return;
     }
 
-    await channel.send(message);
+    await channel.send({ embeds: [embed] });
     console.log('Jadwal dungeon hari ini berhasil dikirim.');
 }
 
@@ -70,4 +98,4 @@ if (require.main === module && process.argv.includes('--preview')) {
     console.log(createMessage() || 'Jadwal hari ini belum tersedia.');
 }
 
-module.exports = { createMessage, getTodaySchedule, sendTodaySchedule, startScheduler };
+module.exports = { createMessage, createEmbed, getTodaySchedule, sendTodaySchedule, startScheduler };
