@@ -68,8 +68,26 @@ function createEmbed(date = new Date()) {
     return embed;
 }
 
+function getChannelId(value) {
+    const channelId = value.trim();
+    const urlMatch = channelId.match(/\/channels\/\d+\/(\d+)\/?$/);
+    return urlMatch ? urlMatch[1] : channelId;
+}
+
 async function sendTodaySchedule(client) {
-    const channel = await client.channels.fetch(process.env.CHANNEL_ID);
+    const channelId = getChannelId(process.env.CHANNEL_ID);
+    let channel;
+
+    try {
+        channel = await client.channels.fetch(channelId);
+    } catch (error) {
+        if (error.code === 50001) {
+            throw new Error('Bot tidak memiliki View Channel pada channel tujuan atau tidak berada di server tersebut.');
+        }
+
+        throw error;
+    }
+
     if (!channel || !channel.isTextBased()) {
         throw new Error('CHANNEL_ID tidak menunjuk ke text channel yang valid.');
     }
@@ -80,7 +98,16 @@ async function sendTodaySchedule(client) {
         return;
     }
 
-    await channel.send({ embeds: [embed] });
+    try {
+        await channel.send({ embeds: [embed] });
+    } catch (error) {
+        if (error.code === 50013) {
+            throw new Error('Bot kekurangan izin Send Messages atau Embed Links pada channel tujuan.');
+        }
+
+        throw error;
+    }
+
     console.log('Jadwal dungeon hari ini berhasil dikirim.');
 }
 
