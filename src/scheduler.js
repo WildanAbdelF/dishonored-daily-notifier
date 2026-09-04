@@ -33,8 +33,8 @@ function createMessage(date = new Date()) {
         'Pagi Pejuang Altera!',
         '',
         `Jadwal Dungeon hari ini (${dateParts.day}/${dateParts.month}/${dateParts.year}):`,
-        `Level 45: ${dungeon.lvl45}`,
-        `Level 50: ${dungeon.lvl50}`,
+        `Level 65: ${dungeon.lvl65}`,
+        `Level 70: ${dungeon.lvl70}`,
         '',
         'Jangan lupa habiskan tiket run kalian sebelum reset harian!'
     ].join('\n');
